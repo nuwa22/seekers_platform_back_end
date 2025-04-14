@@ -1,6 +1,7 @@
 import connection from "../db/db.js";
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
+import cron from 'node-cron';
 
 dotenv.config();
 
@@ -9,7 +10,7 @@ class Form {
     this.title = title;
     this.description = description;
     this.questions = questions; // Array of question objects
-    this.tags = Array.isArray(tags) ? tags.slice(0, 5) : [];; // Max 5 tags
+    this.tags = Array.isArray(tags) ? tags.slice(0, 5) : []; // Max 5 tags
     this.expiryDate = expiryDate;
     this.formProfilePhoto = formProfilePhoto;
     this.ownerEmail = ownerEmail; 
@@ -59,7 +60,29 @@ class Form {
       });
     });
   }
-  
 }
+
+// Cron job to automatically update published forms to draft at midnight every day
+cron.schedule('0 0 * * *', async () => {
+  try {
+    // Log to console before updating
+    console.log('Cron job started: Checking forms to update publish status.');
+    
+    // Update all forms that have passed their expiry date and are still published
+    const query = `
+      UPDATE forms 
+      SET is_published = 0, is_draft = 1 
+      WHERE expiry_date < CURDATE() AND is_published = 1
+    `;
+    
+    await connection.promise().query(query);
+    
+    // Log success message after update
+    console.log('Forms published status updated to draft successfully.');
+  } catch (error) {
+    console.error('Error updating forms:', error);
+  }
+}); 
+
 
 export default Form;
