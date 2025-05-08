@@ -8,7 +8,7 @@ const getEmailFromToken = (req) => {
   if (!authHeader) throw new Error("Authorization header missing");
   const token = authHeader.split(" ")[1];
   const decoded = jwt.verify(token, process.env.JWT_SECRET);
-  return decoded.userEmail;
+  return decoded.email;
 };
 
 // 1. Create a form
@@ -22,7 +22,7 @@ export const createForm = async (req, res) => {
 
     res.status(201).json({ message: "Form created", formId });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({message: "Error creating form", error: err.message });
   }
 };
 
@@ -67,7 +67,7 @@ export const publishForm = async (req, res) => {
     const { formId } = req.body;
 
     await connection.promise().query(
-      `UPDATE forms SET is_published = 1 WHERE id = ? AND owner_email = ?`,
+      `UPDATE forms SET is_published = 1, is_draft = 0 WHERE id = ? AND owner_email = ?`,
       [formId, userEmail]
     );
 
