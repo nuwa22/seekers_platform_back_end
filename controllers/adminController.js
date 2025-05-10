@@ -8,7 +8,7 @@ export const loginAdmin = async (req, res) => {
         if (!emailOrUsername || !password) {
             return res.status(400).json({
                 status: "error",
-                message: "Email/username and password are required"
+                message: "Email and password are required"
             });
         }
         

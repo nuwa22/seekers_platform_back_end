@@ -6,20 +6,22 @@ import cron from 'node-cron';
 dotenv.config();
 
 class Form {
-  constructor(title, description, questions, tags, expiryDate, formProfilePhoto, ownerEmail) {
+  constructor(title, description, questions, tags, expiryDate, formProfilePhoto, ownerEmail, ownerName, ownerProfilePicture) {
     this.title = title;
     this.description = description;
     this.questions = questions; // Array of question objects
     this.tags = Array.isArray(tags) ? tags.slice(0, 5) : []; // Max 5 tags
     this.expiryDate = expiryDate;
     this.formProfilePhoto = formProfilePhoto;
-    this.ownerEmail = ownerEmail; 
+    this.ownerEmail = ownerEmail;
+    this.ownerName = ownerName;
+    this.ownerProfilePicture = ownerProfilePicture; 
   }
 
   async save() {
     const query = `
-      INSERT INTO forms (title, description, questions, tags, expiry_date, form_profile_photo, owner_email)
-      VALUES (?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO forms (title, description, questions, tags, expiry_date, form_profile_photo, owner_email, owner_name, owner_profile_picture)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)	
     `;
     const values = [
       this.title,
@@ -28,7 +30,9 @@ class Form {
       JSON.stringify(this.tags),
       this.expiryDate,
       this.formProfilePhoto,
-      this.ownerEmail, 
+      this.ownerEmail,
+      this.ownerName,
+      this.profilePicture
     ];
 
     return new Promise((resolve, reject) => {

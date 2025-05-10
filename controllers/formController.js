@@ -1,35 +1,27 @@
 import Form from "../models/form.js";
 import connection from "../db/db.js";
 import jwt from "jsonwebtoken";
-
-// Middleware to extract email from token
-const getEmailFromToken = (req) => {
-  const authHeader = req.headers.authorization;
-  if (!authHeader) throw new Error("Authorization header missing");
-  const token = authHeader.split(" ")[1];
-  const decoded = jwt.verify(token, process.env.JWT_SECRET);
-  return decoded.email;
-};
+import { getUserFromToken } from "../middleware/auth.js";
 
 // 1. Create a form
 export const createForm = async (req, res) => {
   try {
-    const ownerEmail = getEmailFromToken(req);
+    const { email: ownerEmail, name: ownerName, profilePicture: ownerProfilePicture } = getUserFromToken(req);
     const { title, description, questions, tags, expiryDate, formProfilePhoto } = req.body;
 
-    const form = new Form(title, description, questions, tags, expiryDate, formProfilePhoto, ownerEmail);
+    const form = new Form(title, description, questions, tags, expiryDate, formProfilePhoto, ownerEmail, ownerName, ownerProfilePicture);
     const formId = await form.save();
 
     res.status(201).json({ message: "Form created", formId });
   } catch (err) {
-    res.status(500).json({message: "Error creating form", error: err.message });
+    res.status(500).json({ message: "Error creating form", error: err.message });
   }
 };
 
-// 2. Get all active forms (excluding own forms)
+// 2. Get all active forms (excluding own)
 export const getActiveForms = async (req, res) => {
   try {
-    const userEmail = getEmailFromToken(req);
+    const { email: userEmail } = getUserFromToken(req);
 
     const [forms] = await connection.promise().query(
       `SELECT * FROM forms WHERE expiry_date >= CURDATE() AND owner_email != ? AND is_published = 1`,
@@ -45,7 +37,7 @@ export const getActiveForms = async (req, res) => {
 // 3. Update form (before publishing)
 export const updateForm = async (req, res) => {
   try {
-    const userEmail = getEmailFromToken(req);
+    const { email: userEmail } = getUserFromToken(req);
     const { formId, title, description, questions, tags, expiryDate, formProfilePhoto } = req.body;
 
     await connection.promise().query(
@@ -63,7 +55,7 @@ export const updateForm = async (req, res) => {
 // 4. Publish form
 export const publishForm = async (req, res) => {
   try {
-    const userEmail = getEmailFromToken(req);
+    const { email: userEmail } = getUserFromToken(req);
     const { formId } = req.body;
 
     await connection.promise().query(
@@ -80,13 +72,11 @@ export const publishForm = async (req, res) => {
 // 5. Stop form
 export const stopForm = async (req, res) => {
   try {
-    const userEmail = getEmailFromToken(req);
+    const { email: userEmail } = getUserFromToken(req);
     const { formId } = req.body;
 
     await connection.promise().query(
-      `UPDATE forms 
-       SET is_published = 0, is_draft = 1 
-       WHERE id = ? AND owner_email = ?`,
+      `UPDATE forms SET is_published = 0, is_draft = 1 WHERE id = ? AND owner_email = ?`,
       [formId, userEmail]
     );
 
@@ -96,11 +86,10 @@ export const stopForm = async (req, res) => {
   }
 };
 
-
 // 6. Delete form
 export const deleteForm = async (req, res) => {
   try {
-    const userEmail = getEmailFromToken(req);
+    const { email: userEmail } = getUserFromToken(req);
     const { formId } = req.body;
 
     await connection.promise().query(
@@ -114,10 +103,10 @@ export const deleteForm = async (req, res) => {
   }
 };
 
-// 7. Submit a form response
+// 7. Submit form response
 export const submitForm = async (req, res) => {
   try {
-    const userEmail = getEmailFromToken(req);
+    const { email: userEmail } = getUserFromToken(req);
     const { formId, answers } = req.body;
 
     const [formResult] = await connection.promise().query(`SELECT owner_email FROM forms WHERE id = ?`, [formId]);
@@ -166,7 +155,7 @@ export const getResponseStatistics = async (req, res) => {
       });
     });
 
-    // Convert to percentages
+    // Convert to percentage
     const percentageStats = {};
     Object.entries(stats).forEach(([question, answers]) => {
       percentageStats[question] = {};
@@ -184,7 +173,7 @@ export const getResponseStatistics = async (req, res) => {
 // 9. Get user's draft forms
 export const getMyDraftForms = async (req, res) => {
   try {
-    const userEmail = getEmailFromToken(req);
+    const { email: userEmail } = getUserFromToken(req);
 
     const [drafts] = await connection.promise().query(
       `SELECT * FROM forms WHERE owner_email = ? AND is_draft = 1`,
@@ -197,10 +186,10 @@ export const getMyDraftForms = async (req, res) => {
   }
 };
 
-// 10. Get all forms created by the logged-in user
+// 10. Get all forms created by the user
 export const getMyForms = async (req, res) => {
   try {
-    const userEmail = getEmailFromToken(req);
+    const { email: userEmail } = getUserFromToken(req);
 
     const [forms] = await connection.promise().query(
       `SELECT * FROM forms WHERE owner_email = ?`,
@@ -212,4 +201,3 @@ export const getMyForms = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
-
