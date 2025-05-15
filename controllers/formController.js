@@ -3,20 +3,6 @@ import connection from "../db/db.js";
 import jwt from "jsonwebtoken";
 import { getUserFromToken } from "../middleware/auth.js";
 
-// 1. Create a form
-export const createForm = async (req, res) => {
-  try {
-    const { email: ownerEmail, name: ownerName, profilePicture: ownerProfilePicture } = getUserFromToken(req);
-    const { title, description, questions, tags, expiryDate, formProfilePhoto } = req.body;
-
-    const form = new Form(title, description, questions, tags, expiryDate, formProfilePhoto, ownerEmail, ownerName, ownerProfilePicture);
-    const formId = await form.save();
-
-    res.status(201).json({ message: "Form created", formId });
-  } catch (err) {
-    res.status(500).json({ message: "Error creating form", error: err.message });
-  }
-};
 
 // 2. Get all active forms (excluding own)
 export const getActiveForms = async (req, res) => {
@@ -53,21 +39,35 @@ export const updateForm = async (req, res) => {
 };
 
 // 4. Publish form
+// 4. Publish form (now also handles creation)
 export const publishForm = async (req, res) => {
   try {
-    const { email: userEmail } = getUserFromToken(req);
-    const { formId } = req.body;
+    const { email: ownerEmail, name: ownerName, profilePicture: ownerProfilePicture } = getUserFromToken(req);
+    const { title, description, questions, tags, expiryDate, formProfilePhoto } = req.body;
 
-    await connection.promise().query(
-      `UPDATE forms SET is_published = 1, is_draft = 0 WHERE id = ? AND owner_email = ?`,
-      [formId, userEmail]
+    const [result] = await connection.promise().query(
+      `INSERT INTO forms (title, description, questions, tags, expiry_date, form_profile_photo, owner_email, owner_name, owner_profile_picture, is_published, is_draft)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 0)`,
+      [
+        title,
+        description,
+        JSON.stringify(questions),
+        JSON.stringify(tags),
+        expiryDate,
+        formProfilePhoto,
+        ownerEmail,
+        ownerName,
+        ownerProfilePicture,
+      ]
     );
 
-    res.json({ message: "Form published" });
+    const formId = result.insertId;
+    res.status(201).json({ message: "Form published", formId });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 };
+
 
 // 5. Stop form
 export const stopForm = async (req, res) => {
@@ -201,3 +201,47 @@ export const getMyForms = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
+
+// 11. Get a form by ID
+export const getFormById = async (req, res) => {
+  try {
+    const { email: userEmail } = getUserFromToken(req);
+    const { formId } = req.params;
+
+    const [forms] = await connection.promise().query(
+      `SELECT * FROM forms WHERE id = ? AND (owner_email = ? OR is_published = 1)`,
+      [formId, userEmail]
+    );
+
+    if (forms.length === 0) {
+      return res.status(404).json({ error: "Form not found or access denied" });
+    }
+
+    res.json(forms[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// 12. Get a specific form by ID, only if owned by the logged-in user
+export const getMyFormById = async (req, res) => {
+  try {
+    const { email: userEmail } = getUserFromToken(req);
+    const formId = req.params.id;
+
+    const [forms] = await connection.promise().query(
+      `SELECT * FROM forms WHERE id = ? AND owner_email = ?`,
+      [formId, userEmail]
+    );
+
+    if (forms.length === 0) {
+      return res.status(404).json({ error: 'Form not found or access denied.' });
+    }
+
+    res.json(forms[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+

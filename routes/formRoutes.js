@@ -1,6 +1,5 @@
 import express from 'express';
 import {
-  createForm,
   getActiveForms,
   updateForm,
   publishForm,
@@ -9,22 +8,21 @@ import {
   submitForm,
   getResponseStatistics,
   getMyDraftForms,
-  getMyForms
+  getMyForms,
+  getFormById,
+  getMyFormById
 } from '../controllers/formController.js';
 
 const router = express.Router();
 
-// Route to create a form
-router.post('/create', createForm);
+// Route to publish a form
+router.post('/publish', publishForm);
 
 // Route to get all active published forms excluding the user's own
 router.get('/active', getActiveForms);
 
 // Route to update a form before publishing
 router.put('/update', updateForm);
-
-// Route to publish a form
-router.put('/publish', publishForm);
 
 // Route to stop (unpublish) a form
 router.put('/stop', stopForm);
@@ -41,5 +39,9 @@ router.get('/statistics/:formId', getResponseStatistics);
 router.get("/my-drafts", getMyDraftForms);
 
 router.get("/my-forms", getMyForms);
+
+router.get('/get-form/:formId', getFormById );
+
+router.get('/my-forms/:id', getMyFormById);
 
 export default router;
