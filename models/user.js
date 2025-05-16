@@ -6,7 +6,7 @@ import dotenv from "dotenv";
 dotenv.config();
 
 class User {
-    constructor(email, password = "", name = "", currentPossition = "", industry = "", role = 'user', point = 0, profilePicture = null) {
+    constructor(email, password = "", name = "", currentPossition = "", industry = "", role = 'user', point = 0, profilePicture = "") {
         this.email = email;
         this.passwordHash = password ? bcrypt.hashSync(password, 10) : "";
         this.name = name;

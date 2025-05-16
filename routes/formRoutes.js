@@ -10,7 +10,8 @@ import {
   getMyDraftForms,
   getMyForms,
   getFormById,
-  getMyFormById
+  getMyFormById,
+  activateForm
 } from '../controllers/formController.js';
 
 const router = express.Router();
@@ -43,5 +44,7 @@ router.get("/my-forms", getMyForms);
 router.get('/get-form/:formId', getFormById );
 
 router.get('/my-forms/:id', getMyFormById);
+
+router.post('/activate', activateForm);
 
 export default router;

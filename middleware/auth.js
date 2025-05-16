@@ -53,3 +53,4 @@ export const getUserFromToken = (req) => {
     profilePicture: decoded.profilePicture
   };
 };
+

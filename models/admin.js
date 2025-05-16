@@ -65,6 +65,47 @@ class Admin extends User {
             );
         });
     }
+
+    async getAllUsers() {
+        return new Promise((resolve, reject) => {
+            connection.query(
+                `SELECT id, email, name, currentPossition, industry, role, point, profilePicture, created_at, updated_at 
+                 FROM users WHERE role = "user"`,
+                (err, results) => {
+                    if (err) {
+                        reject(err);
+                    } else {
+                        resolve(results);
+                    }
+                }
+            );
+        });
+    }
+
+    // ✅ Change own password
+    async changeOwnPassword(currentPassword, newPassword) {
+        return this.changePassword(currentPassword, newPassword); // inherited
+    }
+
+    // ✅ Update own profile
+    async updateOwnProfile(data) {
+        return this.updateProfile(data); // inherited
+    }
+
+    async getAllForms() {
+    return new Promise((resolve, reject) => {
+        connection.query(
+            `SELECT * FROM forms`,
+            (err, results) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve(results);
+                }
+            }
+        );
+    });
+}
 }
 
 export default Admin;

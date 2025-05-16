@@ -244,4 +244,24 @@ export const getMyFormById = async (req, res) => {
   }
 };
 
+// 13. activate form
+export const activateForm = async (req, res) => {
+  try {
+    const { email: userEmail } = getUserFromToken(req);
+    const { formId } = req.body;
+
+    await connection.promise().query(
+      `UPDATE forms SET is_published = 1, is_draft = 0 WHERE id = ? AND owner_email = ?`,
+      [formId, userEmail]
+    );
+
+    res.json({ message: "Form activated and published successfully" });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+
+
+
 
