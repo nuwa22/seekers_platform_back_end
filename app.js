@@ -7,6 +7,8 @@ import "./db/db.js";
 import userRoutes from "./routes/userRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
 import formRoutes from "./routes/formRoutes.js";
+import ioDocumentRouter from "./routes/IODocumentRoutes.js";
+
 
 
 dotenv.config();
@@ -22,6 +24,8 @@ app.use(express.json());
 app.use("/api/users", userRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/forms", formRoutes);
+app.use("/api/io", ioDocumentRouter)
+
 
 
 const port = process.env.PORT || 5000;

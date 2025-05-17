@@ -106,6 +106,21 @@ class Admin extends User {
         );
     });
 }
+
+async getAllIoDocuments() {
+    return new Promise((resolve, reject) => {
+      connection.query(
+        `SELECT * FROM io_documents`, // assuming your IO documents table is named 'io_documents'
+        (err, results) => {
+          if (err) {
+            reject(err);
+          } else {
+            resolve(results);
+          }
+        }
+      );
+    });
+  }
 }
 
 export default Admin;

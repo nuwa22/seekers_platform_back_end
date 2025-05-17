@@ -33,3 +33,18 @@ export const getAllForms = async (req, res) => {
     }
 };
 
+export const getAllIoDocuments = async (req, res) => {
+  try {
+    const admin = new Admin(req.user.email);
+    const documents = await admin.getAllIoDocuments();
+
+    res.status(200).json({
+      status: "success",
+      documents,
+    });
+  } catch (error) {
+    console.error("Get all IO documents error:", error);
+    res.status(500).json({ status: "error", error: "Could not fetch IO documents" });
+  }
+};
+

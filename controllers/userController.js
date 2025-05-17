@@ -1,4 +1,5 @@
 import User from "../models/user.js";
+import connection from "../db/db.js";
 
 export const registerUser = async (req, res) => {
     try {
@@ -82,6 +83,58 @@ export const updateUserProfile = async (req, res) => {
             industry,
             profilePicture
         });
+
+        // After successful user profile update, update all forms owned by this user
+        if (name || profilePicture) {
+    try {
+        // Build the update query for the 'forms' table
+        let formsUpdateQuery = "UPDATE forms SET ";
+        const formsUpdateFields = [];
+        const formsUpdateValues = [];
+
+        if (name) {
+            formsUpdateFields.push("owner_name = ?");
+            formsUpdateValues.push(name);
+        }
+
+        if (profilePicture) {
+            formsUpdateFields.push("owner_profile_picture = ?");
+            formsUpdateValues.push(profilePicture);
+        }
+
+        formsUpdateQuery += formsUpdateFields.join(", ") + " WHERE owner_email = ?";
+        formsUpdateValues.push(email);
+
+        await connection.promise().query(formsUpdateQuery, formsUpdateValues);
+        console.log(`Updated 'forms' table for user ${email}`);
+
+        // Build the update query for the 'io_documents' table
+        let ioDocsUpdateQuery = "UPDATE io_documents SET ";
+        const ioDocsUpdateFields = [];
+        const ioDocsUpdateValues = [];
+
+        if (name) {
+            ioDocsUpdateFields.push("owner_name = ?");
+            ioDocsUpdateValues.push(name);
+        }
+
+        if (profilePicture) {
+            ioDocsUpdateFields.push("io_owner_profile_picture = ?");
+            ioDocsUpdateValues.push(profilePicture);
+        }
+
+        ioDocsUpdateQuery += ioDocsUpdateFields.join(", ") + " WHERE owner_email = ?";
+        ioDocsUpdateValues.push(email);
+
+        await connection.promise().query(ioDocsUpdateQuery, ioDocsUpdateValues);
+        console.log(`Updated 'io_documents' table for user ${email}`);
+
+    } catch (error) {
+        console.error("Error updating user data in forms or io_documents:", error);
+        // Log and continue – don’t stop the process even if one update fails
+    }
+}
+
 
         res.status(200).json(result);
     } catch (error) {
